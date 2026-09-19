@@ -1,0 +1,226 @@
+/* Sources are listed by hand on purpose. Tailwind's automatic detection registers one watch glob per folder, and
+   Turbopack reads the brackets in route folders like [slug] as a glob character class, so edits inside them never
+   invalidated this file's cached output: new classes silently did not exist in dev. A bracket-free glob fixes it. */
+@import "tailwindcss" source(none);
+@source "../**/*.{ts,tsx}";
+
+/* Black x white x red. Darkness is the arena, white is precision, red is pressure and action.
+   Red is rationed: primary actions, live signals, focus and errors. Success messages are white, never red.
+   Shape rule: buttons are pills, panels are 28px (22px inner), inputs are 12px. Nothing else. */
+:root {
+  --ink: #050505;      /* Clutch Black */
+  --surface: #111111;  /* Carbon */
+  --raised: #1a1a1a;
+  --line: #2a2a2a;
+  --text: #f2f2f2;     /* Steel White */
+  --muted: #9a9a9a;
+  --red: #ff1a1a;      /* Clutch Red */
+  --danger: var(--red);
+  --accent: var(--red);
+  --spring: cubic-bezier(0.32, 0.72, 0, 1);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-red: var(--red);
+  --color-danger: var(--danger);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-teko);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html {
+  /* the WebGL canvas paints over this; it is what shows if WebGL is unavailable */
+  background:
+    radial-gradient(60rem 40rem at 85% 10%, rgb(255 26 26 / 0.06), transparent 60%),
+    var(--ink);
+  color: var(--text);
+}
+body { font-family: var(--font-geist-sans), system-ui, sans-serif; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; border-radius: 6px; }
+::selection { background: var(--red); color: var(--text); }
+
+/* Teko: tall, condensed, uppercase. The arena-scoreboard voice. */
+.display {
+  font-family: var(--font-teko), system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+/* Page enter: template.tsx remounts per navigation, which replays this. */
+@keyframes page-in { from { opacity: 0; transform: translateY(12px); } }
+/* The one orchestrated load moment: hero lines rise in sequence while the swarm assembles. */
+@keyframes rise { from { opacity: 0; transform: translateY(28px); filter: blur(6px); } }
+@keyframes row-in { from { opacity: 0; transform: translateY(24px) scale(0.98); } }
+
+/* Game art: the key art settles in slowly and the character rises into place. */
+@keyframes push-in { from { transform: scale(1.14); } }
+@keyframes hero-in { from { opacity: 0; transform: translateY(10%) scale(0.95); } }
+
+/* Fill mode is `backwards`, never `both`: an element whose transform animation is still filling becomes the
+   containing block for position:fixed descendants and a stacking context, forever. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-in { animation: page-in 0.45s var(--spring) backwards; }
+  .rise > * { animation: rise 0.9s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+  .stagger > * { animation: rise 0.6s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+  .lineup > li { animation: rise 1s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 120ms + 450ms); }
+  .push-in { animation: push-in 9s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+  .hero-in { animation: hero-in 1.1s var(--spring) 0.2s backwards; }
+  /* rows reveal as they scroll into view; browsers without scroll-driven animations just show them */
+  @supports (animation-timeline: view()) {
+    .row-in { animation: row-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  }
+}
+
+/* Home chapters: the art pushes in and the character rises as the chapter scrolls into view. Scroll-driven, no JS;
+   browsers without it, and reduced motion, just show the finished frame. */
+@keyframes scroll-art { from { transform: scale(1.2); } }
+@keyframes scroll-hero { from { opacity: 0; transform: translateY(16%) scale(0.92); } }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .scroll-art { animation: scroll-art linear both; animation-timeline: view(); animation-range: entry 0% cover 50%; }
+    .scroll-hero { animation: scroll-hero linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
+  }
+}
+
+/* Contest cards: the art pushes in and the character lifts. Mouse hover and keyboard focus only; touch keeps it still. */
+@media (prefers-reduced-motion: no-preference) {
+  .game-card .card-art { transition: transform 1.2s var(--spring), opacity 0.6s var(--spring); }
+  .game-card .card-hero { transition: transform 0.9s var(--spring); }
+  .game-card:focus-within .card-art { transform: scale(1.06); opacity: 0.8; }
+  .game-card:focus-within .card-hero { transform: translateY(-4%) scale(1.04); }
+  @media (hover: hover) {
+    .game-card:hover .card-art { transform: scale(1.06); opacity: 0.8; }
+    .game-card:hover .card-hero { transform: translateY(-4%) scale(1.04); }
+  }
+}
+
+/* Pointer spotlight on panels: --mx/--my are written straight to the element by Spotlight, never through React state. */
+.spot { position: relative; isolation: isolate; }
+.spot::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(22rem circle at var(--mx, 50%) var(--my, 50%), color-mix(in oklch, var(--accent) 22%, transparent), transparent 65%);
+  opacity: 0; transition: opacity 0.5s var(--spring);
+}
+@media (hover: hover) { .spot:hover::before { opacity: 1; } }
+
+/* The glow lives on the stage, so it sits behind the swarm at every breakpoint and fades out before any edge. */
+.stage { background: radial-gradient(closest-side, color-mix(in oklch, var(--accent) 13%, transparent), transparent); }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* First-visit loading screen (IntroLoader). <head> sets html[data-intro]: playing -> out -> done, and only on the first
+   load of a visit, so without that attribute (later loads, no JavaScript) none of this shows. */
+.intro { display: none; }
+html[data-intro="playing"], html[data-intro="out"] { overflow: hidden; }
+html[data-intro="playing"] .intro, html[data-intro="out"] .intro { display: block; position: fixed; inset: 0; z-index: 60; }
+html[data-intro="out"] .intro { pointer-events: none; }
+/* the page's own entrance waits behind the loader and plays as the halves part */
+html[data-intro="playing"] main, html[data-intro="playing"] main * { animation-play-state: paused !important; }
+
+/* Two copies of the scene, cut along the Clutch logo's slash: rising left to right, 62% down to 38% down. */
+.intro-half { position: absolute; inset: 0; overflow: hidden; background: var(--ink); transition: transform 0.9s var(--spring) 0.24s; }
+.intro-top { clip-path: polygon(0 0, 100% 0, 100% 38%, 0 62%); }
+.intro-bottom { clip-path: polygon(0 calc(62% - 1px), 100% calc(38% - 1px), 100% 100%, 0 100%); } /* 1px over the top half: no antialiased seam */
+.intro-half::after { /* faint scanlines: a screen, not a page */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.028) 0 1px, transparent 1px 3px);
+}
+.intro-glow { position: absolute; inset: 0; background: radial-gradient(34rem 22rem at 50% 46%, rgb(255 26 26 / 0.2), transparent 70%); }
+.intro-stage { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.25rem; padding-bottom: 6vh; }
+.intro-logo { position: relative; width: min(66vw, 400px); }
+.intro-logo img { display: block; width: 100%; height: auto; }
+.intro-scan { position: absolute; top: -18%; bottom: -18%; left: 0; width: 2px; background: var(--red); box-shadow: 0 0 14px 3px rgb(255 26 26 / 0.7); opacity: 0; }
+.intro-logo::after { /* a light glint travelling across the logo, masked to its shape */
+  content: ""; position: absolute; inset: 0; opacity: 0;
+  background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.7) 50%, transparent 62%) 150% 0 / 250% 100% no-repeat;
+  -webkit-mask: url(/logo.png) center / contain no-repeat; mask: url(/logo.png) center / contain no-repeat;
+}
+.intro-bar { width: min(66vw, 400px); height: 2px; background: rgb(255 255 255 / 0.1); border-radius: 2px; }
+.intro-bar span { display: block; height: 100%; background: var(--red); border-radius: inherit; transform: scaleX(0); transform-origin: left; box-shadow: 0 0 12px 1px rgb(255 26 26 / 0.8); }
+.intro-foot { position: absolute; inset: auto 0 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding: 0 1rem 1.25rem; }
+.intro-count { font-size: clamp(4.5rem, 15vw, 10rem); color: var(--text); }
+.intro-count small { margin-left: 0.15em; font-size: 0.32em; color: var(--muted); }
+.intro-games { display: flex; gap: 0.85rem; padding-bottom: 1.1rem; }
+.intro-games li { width: 1.9rem; height: 1.9rem; background: rgb(255 255 255 / 0.16); -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; transition: background-color 0.4s var(--spring); }
+.intro-games li.on { background: var(--red); }
+.intro-cut { /* the slash itself, drawn along the cut: from 62% down on the left to 38% down on the right */
+  position: absolute; left: 0; top: 62%; width: hypot(100vw, 24vh); height: 2px; margin-top: -1px;
+  background: var(--red); box-shadow: 0 0 12px 2px rgb(255 26 26 / 0.8);
+  transform-origin: 0 50%; rotate: atan2(-24vh, 100vw); scale: 0 1;
+}
+@media (min-width: 640px) {
+  .intro-foot { padding: 0 2.5rem 2rem; }
+  .intro-games { gap: 1.1rem; padding-bottom: 1.6rem; }
+  .intro-games li { width: 2.4rem; height: 2.4rem; }
+}
+
+@keyframes intro-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes intro-scan { 0% { left: 0; opacity: 1; } 85% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+@keyframes intro-glint { 0% { background-position: 150% 0; opacity: 1; } 60%, 100% { background-position: -50% 0; opacity: 1; } }
+@keyframes intro-breathe { 50% { opacity: 0.6; } }
+@keyframes intro-pop { 40% { transform: scale(1.22); } }
+@keyframes intro-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes intro-draw { to { scale: 1 1; } }
+@keyframes intro-fade { to { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .intro-logo img { animation: intro-reveal 1s var(--spring) 0.15s backwards; }
+  .intro-scan { animation: intro-scan 1s var(--spring) 0.15s; }
+  .intro-logo::after { animation: intro-glint 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.2s infinite; }
+  .intro-glow { animation: intro-breathe 2.6s ease-in-out infinite; }
+  .intro-bar, .intro-foot { animation: intro-rise 0.8s var(--spring) 0.45s backwards; }
+  .intro-games li.on { animation: intro-pop 0.5s var(--spring); }
+  html[data-intro="out"] .intro-cut { animation: intro-draw 0.3s cubic-bezier(0.7, 0, 0.3, 1) forwards, intro-fade 0.35s ease 0.6s forwards; }
+  html[data-intro="out"] .intro-top { transform: translate3d(0, -100%, 0); }
+  html[data-intro="out"] .intro-bottom { transform: translate3d(0, 100%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro { transition: opacity 0.3s ease; }
+  html[data-intro="out"] .intro { opacity: 0; }
+}
+
+/* Page changes: loading.tsx's sweep along the top edge. */
+@keyframes route-bar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.route-bar span { display: block; width: 40%; height: 100%; background: var(--red); box-shadow: 0 0 10px 1px rgb(255 26 26 / 0.8); }
+@media (prefers-reduced-motion: no-preference) { .route-bar span { animation: route-bar 1.1s var(--spring) infinite; } }
+
+/* "Clutch by NIAT" on the home hero. The wordmark slides in, "by" rises, the shield lands like a stamp, then a light
+   sweeps across both logos now and then. The sweep is masked by each logo's own image (--logo), so it never shows as
+   a box. Reduced motion: the finished lockup, still. */
+@keyframes brand-in { from { opacity: 0; transform: translateX(-48px); filter: blur(10px); } }
+@keyframes brand-by { from { opacity: 0; transform: translateY(14px); } }
+@keyframes brand-stamp { from { opacity: 0; transform: translateY(-36px) scale(1.35) rotate(-10deg); } }
+@keyframes sheen { from { background-position: 100% 0; } 30%, to { background-position: 0 0; } }
+.sheen { position: relative; display: block; }
+.sheen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgb(255 26 26 / 0.6) 46%, rgb(255 255 255 / 0.95) 50%, rgb(255 26 26 / 0.6) 54%, transparent 62%) 0 0 / 250% 100% no-repeat;
+  -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
+}
+/* NIAT's crest keeps its own colours: a plain white glint, no red */
+.brand-stamp.sheen::after { background-image: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.7) 50%, transparent 60%); }
+@media (prefers-reduced-motion: no-preference) {
+  .brand-in { animation: brand-in 1s var(--spring) 0.1s backwards; }
+  .brand-by { animation: brand-by 0.7s var(--spring) 0.4s backwards; }
+  .brand-stamp { animation: brand-stamp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s backwards; }
+  .sheen::after { animation: sheen 6s ease-in-out 1.6s infinite backwards; }
+  .brand-stamp.sheen::after { animation-delay: 1.9s; }
+}
