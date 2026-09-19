@@ -1,8 +1,5 @@
 import { MongoClient, type Db } from 'mongodb'
 
-const uri = process.env.MONGODB_URI ?? '' // `?? ''` keeps it a plain string for the closure below
-if (!uri) throw new Error('Missing env var MONGODB_URI')
-
 // cached on globalThis so dev HMR and warm Vercel lambdas reuse one pool
 const g = globalThis as unknown as { _mongo?: MongoClient; _indexes?: Promise<void> }
 
@@ -17,6 +14,8 @@ const dead = (c: MongoClient) => {
 }
 
 export function getClient() {
+  const uri = process.env.MONGODB_URI ?? ''
+  if (!uri) throw new Error('Missing env var MONGODB_URI')
   if (!g._mongo || dead(g._mongo)) {
     g._mongo = new MongoClient(uri)
     g._indexes = undefined // a new pool has not run them yet
