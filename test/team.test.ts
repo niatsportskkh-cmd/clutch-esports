@@ -77,6 +77,7 @@ test('a contest the college was not invited to is refused', async () => {
   assert.deepEqual(await registerTeam(c, captain(a), roster([a, b])), { ok: false, error: { code: 'not_your_college', branch: KKH } })
   assert.equal(visibleTo({ branches: [VJ], status: 'open' }, KKH), false)
   assert.equal(visibleTo({ branches: [VJ], status: 'open' }, VJ), true)
+  assert.equal(visibleTo({ branches: [' VIGNANA JYOTHI '], status: 'open' }, 'vignana jyothi'), true)
   assert.equal(visibleTo({ branches: [VJ], status: 'open' }, null), true) // signed out: the public list
 })
 

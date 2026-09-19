@@ -54,9 +54,12 @@ export const teams = () => db.collection<Team>('teams')
 export const isRegOpen = (t: Pick<Tournament, 'status' | 'regClosesAt'>, now = new Date()) =>
   t.status === 'open' && now < t.regClosesAt
 
+const sameBranch = (left: string, right: string) => left.trim().toLocaleLowerCase() === right.trim().toLocaleLowerCase()
+const branchQuery = (branch: string) => ({ $regex: `^${branch.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' })
+
 /** A contest is only visible to the colleges it was opened to. Signed-out visitors see the public list. */
 export const visibleTo = (t: Pick<Tournament, 'branches' | 'status'>, branch: string | null | undefined) =>
-  t.status !== 'draft' && (!branch || t.branches.includes(branch))
+  t.status !== 'draft' && (!branch || t.branches.some(allowed => sameBranch(allowed, branch)))
 
 /** Plain, serialisable shape for client components: never hand a Mongo document across the server/client boundary. */
 export const toView = (t: Tournament, teamCount: number, locations: string[], now = new Date()) => ({
@@ -73,7 +76,7 @@ export const getById = async (id: string) => (ObjectId.isValid(id) ? tournaments
 /** `branch` null means a signed-out visitor: they get every open contest, and the college gate bites at registration. */
 export const listOpen = (branch: string | null = null) =>
   tournaments()
-    .find({ status: 'open', startsAt: { $gt: new Date() }, game: { $in: [...GAMES] }, ...(branch ? { branches: branch } : {}) })
+    .find({ status: 'open', startsAt: { $gt: new Date() }, game: { $in: [...GAMES] }, ...(branch ? { branches: branchQuery(branch) } : {}) })
     .sort({ startsAt: 1 })
     .toArray()
 
